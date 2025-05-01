@@ -1,4 +1,4 @@
-package com.example.market;
+package com.sos.game;
 
 import javafx.animation.KeyFrame;
 import javafx.animation.Timeline;
@@ -21,7 +21,7 @@ import javafx.util.Duration;
 import java.awt.Point;
 
 
-public class MarketController implements Initializable {
+public class SOS_GameController implements Initializable {
     @FXML
     private Label welcomeText;
 
@@ -34,6 +34,17 @@ public class MarketController implements Initializable {
     @FXML
     protected void onHelloButtonClick() {
         welcomeText.setText("YAY REPLAY THIS SOS GAME!");
+
+
+            grid.clear();
+            sScore = 0;
+            oScore = 0;
+            redTurn = true;
+
+
+            gridSize();
+
+
     }
 
     @FXML

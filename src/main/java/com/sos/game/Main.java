@@ -1,4 +1,4 @@
-package com.example.market;
+package com.sos.game;
 
 import javafx.application.Application;
 import javafx.fxml.FXMLLoader;

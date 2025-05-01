@@ -6,6 +6,6 @@ module com.example.market {
     requires org.kordamp.bootstrapfx.core;
     requires java.desktop;
 
-    opens com.example.market to javafx.fxml;
-    exports com.example.market;
+    opens com.sos.game to javafx.fxml;
+    exports com.sos.game;
 }
