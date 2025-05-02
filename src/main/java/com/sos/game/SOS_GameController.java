@@ -2,9 +2,11 @@ package com.sos.game;
 
 import javafx.animation.KeyFrame;
 import javafx.animation.Timeline;
+import javafx.application.Platform;
 import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
 import javafx.scene.Node;
+import javafx.scene.control.Alert;
 import javafx.scene.control.CheckBox;
 import javafx.scene.control.ChoiceBox;
 import javafx.scene.control.Label;
@@ -20,6 +22,10 @@ import javafx.util.Duration;
 
 import java.awt.Point;
 
+import java.io.*;
+import java.util.*;
+import javafx.animation.*;
+import javafx.util.Duration;
 
 public class SOS_GameController implements Initializable {
     @FXML
@@ -29,22 +35,26 @@ public class SOS_GameController implements Initializable {
     public Boolean redTurn = true;
     public Boolean blueTurn = true;
 
-    public char player;
+
+    //private List<RecordGame> recordedMoves = new ArrayList<>();
 
     @FXML
     protected void onHelloButtonClick() {
         welcomeText.setText("YAY REPLAY THIS SOS GAME!");
-
-
             grid.clear();
             sScore = 0;
             oScore = 0;
             redTurn = true;
-
-
             gridSize();
 
+        if(redPlayerComputer.isSelected() && bluePlayerComputer.isSelected()){
+            computerPlayComputer();
+        }else if (redPlayerComputer.isSelected() && bluePlayerHuman.isSelected()){
+            computerVsHumanChecked();
 
+        }else if (bluePlayerComputer.isSelected() && redPlayerHuman.isSelected()){
+            computerVsHumanChecked();
+        }
     }
 
     @FXML
@@ -185,6 +195,9 @@ public class SOS_GameController implements Initializable {
         if(redPlayerComputer.isSelected() && bluePlayerComputer.isSelected()){
             computerPlayComputer();
 
+        }else if (redPlayerComputer.isSelected() && bluePlayerHuman.isSelected()){
+            computerVsHumanChecked();
+
         }
 
     }
@@ -193,11 +206,95 @@ public class SOS_GameController implements Initializable {
     protected void bComputerChecked(){
         bluePlayerHuman.setSelected(false);
 
-
-        //check if the red player computer checkbox  is checked then have it play against itself
         if (redPlayerComputer.isSelected() && bluePlayerComputer.isSelected()) {
             computerPlayComputer();
+        }else if (bluePlayerComputer.isSelected() && redPlayerHuman.isSelected()){
+            computerVsHumanChecked();
         }
+    }
+
+    @FXML
+    protected void computerVsHumanChecked(){
+        Timeline timeCycle = new Timeline();
+        timeCycle.setCycleCount(Timeline.INDEFINITE);
+
+        KeyFrame kf = new KeyFrame(Duration.seconds(0.5), event -> {
+            if (fullGrid()) {
+                timeCycle.stop();
+                if (generalGame.isSelected()) {
+                    onGeneralGameChecked();
+                }
+                if (simpleGame.isSelected() || generalGame.isSelected()) {
+                    drawGameAlert();
+                }
+                return;
+            }
+
+            boolean isComputerTurn = (redTurn && redPlayerComputer.isSelected()) || (!redTurn && bluePlayerComputer.isSelected());
+            if (!isComputerTurn) {
+                return;
+            }
+
+            Character playerChar = null;
+            if (redTurn && redPlayerComputer.isSelected()) {
+                playerChar = redPlayerS.isSelected() ? 'S' : 'O';
+            } else if (!redTurn && bluePlayerComputer.isSelected()) {
+                playerChar = bluePlayerS.isSelected() ? 'S' : 'O';
+            }
+
+            Point computerChoice = computerChoice();
+            if (computerChoice != null && playerChar != null) {
+                int r = computerChoice.x;
+                int c = computerChoice.y;
+                grid.put(new Point(r, c), playerChar);
+
+                for (Node n : gridPane.getChildren()) {
+                    if (GridPane.getRowIndex(n) == r && GridPane.getColumnIndex(n) == c && n instanceof StackPane cell) {
+                        Label label = new Label(playerChar.toString());
+                        int ggridSize = choiceBox.getValue();
+
+                        if (ggridSize == 2) {
+                            label.setStyle("-fx-font-size: 40px;");
+                        } else if (ggridSize == 3) {
+                            label.setStyle("-fx-font-size: 30px;");
+                        } else if (ggridSize == 4) {
+                            label.setStyle("-fx-font-size: 25px;");
+                        } else if (ggridSize == 5) {
+                            label.setStyle("-fx-font-size: 20px;");
+                        } else if (ggridSize == 6) {
+                            label.setStyle("-fx-font-size: 19px;");
+                        } else if (ggridSize == 7) {
+                            label.setStyle("-fx-font-size: 16px;");
+                        } else if (ggridSize == 8) {
+                            label.setStyle("-fx-font-size: 15px;");
+                        }
+
+                        cell.getChildren().add(label);
+
+                        if (isThereSOS(r, c)) {
+                            System.out.println("Player '" + playerChar + "' wins by forming SOS!");
+                            if (generalGame.isSelected()) {
+                                if (playerChar == 'S') sScore++;
+                                else if (playerChar == 'O') oScore++;
+                            }
+
+                            if (simpleGame.isSelected()) {
+                                timeCycle.stop();
+                                onSimpleGameChecked(playerChar);
+                                return;
+                            }
+                        }
+
+                        redTurn = !redTurn;
+                        break;
+                    }
+                }
+            }
+        });
+
+        timeCycle.getKeyFrames().add(kf);
+        timeCycle.play();
+
     }
 
     @FXML
@@ -222,18 +319,22 @@ public class SOS_GameController implements Initializable {
 
     }
 
-    //Rename this for human play computer 
+
     @FXML
     protected void computerPlayComputer() {
         Timeline timeCycle = new Timeline();
         timeCycle.setCycleCount(Timeline.INDEFINITE);
 
-        KeyFrame kf = new KeyFrame(Duration.seconds(0.5), event -> {
+        KeyFrame kf = new KeyFrame(Duration.seconds(0.8), event -> {
             if (fullGrid()) {
                 timeCycle.stop();
                 if (generalGame.isSelected()) {
                     onGeneralGameChecked();
                 }
+                if (simpleGame.isSelected() || generalGame.isSelected()) {
+                    drawGameAlert();
+                }
+
                 return;
             }
             Character playerChar = null;
@@ -508,5 +609,17 @@ public class SOS_GameController implements Initializable {
             }
         }
         return true;
+    }
+
+    @FXML
+    private void drawGameAlert() {
+
+        Platform.runLater(() -> {
+            Alert alert = new Alert(Alert.AlertType.INFORMATION);
+            alert.setTitle("Game Over");
+            alert.setHeaderText(null);
+            alert.setContentText("This game was a draw.");
+            alert.show(); // Non-blocking version
+        });
     }
 }
