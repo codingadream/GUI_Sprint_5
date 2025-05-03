@@ -84,39 +84,28 @@ public class SOS_GameController implements Initializable {
     @Override
     public void initialize(URL url, ResourceBundle resourceBundle) {
         simpleGame.setSelected(true);
-
-
         bluePlayerS.setSelected(true);
         redPlayerO.setSelected(true);
-
         choiceBox.setValue(8);
         choiceBox.getItems().addAll(2, 3, 4, 5, 6, 7, 8);
-
         choiceBox.setOnAction(event -> gridSize());
 
 
         gridSize();
-
     }
 
     @FXML
     protected void SimpleGameChecked() {
         generalGame.setSelected(false);
         gridSize();
-
-
         int size = choiceBox.getValue();
-
     }
+
     @FXML
     protected void onSimpleGameChecked(char winner) {
         generalGame.setSelected(false);
         gridSize();
-
-
         int size = choiceBox.getValue();
-
-
         System.out.println("THE GAME IS OVER!! PLAYER  " + winner + " HAS WON THIS GAME!!");
         welcomeText.setText("THE GAME IS OVER!! PLAYER  " + winner + " HAS WON THIS GAME!!");
     }
@@ -127,11 +116,8 @@ public class SOS_GameController implements Initializable {
     protected void bSChecked() {
         if (bluePlayerS.isSelected()) {
             redPlayerO.setSelected(true);
-
             bluePlayerO.setSelected(false);
             redPlayerS.setSelected(false);
-
-
         }
     }
 
@@ -142,21 +128,16 @@ public class SOS_GameController implements Initializable {
           redPlayerO.setSelected(false);
           bluePlayerS.setSelected(false);
           bluePlayerO.setSelected(true);
-
       }
-
     }
 
     @FXML
     protected void rOChecked() {
         if(redPlayerO.isSelected()){
-
           redPlayerS.setSelected(false);
           bluePlayerO.setSelected(false);
           bluePlayerS.setSelected(true);
-
        }
-
     }
 
 
@@ -164,10 +145,8 @@ public class SOS_GameController implements Initializable {
     @FXML
     protected void bOChecked(){
         if(bluePlayerO.isSelected()) {
-
         bluePlayerS.setSelected(false);
         redPlayerO.setSelected(false);
-
         redPlayerS.setSelected(true);
         }
     }
@@ -197,9 +176,7 @@ public class SOS_GameController implements Initializable {
 
         }else if (redPlayerComputer.isSelected() && bluePlayerHuman.isSelected()){
             computerVsHumanChecked();
-
         }
-
     }
 
     @FXML
@@ -247,6 +224,7 @@ public class SOS_GameController implements Initializable {
                 int r = computerChoice.x;
                 int c = computerChoice.y;
                 grid.put(new Point(r, c), playerChar);
+                recordFile(r, c, playerChar);
 
                 for (Node n : gridPane.getChildren()) {
                     if (GridPane.getRowIndex(n) == r && GridPane.getColumnIndex(n) == c && n instanceof StackPane cell) {
@@ -300,7 +278,6 @@ public class SOS_GameController implements Initializable {
     @FXML
     private Point computerChoice(){
         int gridsize = choiceBox.getValue();
-
         List<Point> emptyCells = new ArrayList<>();
 
         for (int r = 0; r < gridsize; r++) {
@@ -355,6 +332,7 @@ public class SOS_GameController implements Initializable {
                 int c = ComputerChoice.y;
 
                 grid.put(new Point(r, c), playerChar);
+                recordFile(r, c, playerChar);
 
                 for (Node n : gridPane.getChildren()) {
                     if (GridPane.getRowIndex(n) == r && GridPane.getColumnIndex(n) == c && n instanceof StackPane cell) {
@@ -495,17 +473,24 @@ public class SOS_GameController implements Initializable {
                 final int Frow = row;
                 final int Fcolumn = column;
 
-
-
-
                 cell.setOnMouseClicked(event -> WhenCellisClicked(Frow, Fcolumn, cell));
-
             }
         }
     }
 
     @FXML
     protected void WhenCellisClicked(int row, int column, StackPane cell) {
+
+
+        if (!cell.getChildren().isEmpty()) {
+            Alert alert = new Alert(Alert.AlertType.WARNING);
+            alert.setTitle("Invalid Move");
+            alert.setHeaderText(null);
+            alert.setContentText("Pick an empty cell");
+            alert.showAndWait();
+            return;
+        }
+
 
 
         Character player = 'M';
@@ -534,10 +519,10 @@ public class SOS_GameController implements Initializable {
         }
 
         grid.put(new Point(row, column), player);
+        recordFile(row, column, player);
 
 
         if (isThereSOS(row, column)) {
-            //Boolean gameOver = true;
             System.out.println("Player '" + player + "' wins by forming SOS!");
 
             if(generalGame.isSelected()) {
@@ -568,7 +553,7 @@ public class SOS_GameController implements Initializable {
             forLabel = "O";
         }
 
-        //I created manual reactive size for player peices depending on the size of the grid
+
         Label label = new Label(forLabel);
         int selected = choiceBox.getValue();
         if (selected == 2){
@@ -588,6 +573,7 @@ public class SOS_GameController implements Initializable {
         }
 
         cell.getChildren().add(label);
+
 
         boolean isFull = fullGrid();
         if(generalGame.isSelected() && isFull == true){
@@ -619,7 +605,72 @@ public class SOS_GameController implements Initializable {
             alert.setTitle("Game Over");
             alert.setHeaderText(null);
             alert.setContentText("This game was a draw.");
-            alert.show(); // Non-blocking version
+            alert.show();
         });
     }
+
+    private void recordFile(int r, int c, char player){
+        try (FileWriter writer = new FileWriter("SOS_Game.txt")){
+            writer.write(r + ", " + c + " , " + player +"\n");
+        }catch (IOException e){
+            e.printStackTrace();
+        }
+    }
+
+    @FXML
+    protected void replayRecordedGame() {
+        try (BufferedReader reader = new BufferedReader(new FileReader("recorded_game.txt"))) {
+            gridSize(); // Reset board
+            grid.clear();
+            sScore = 0;
+            oScore = 0;
+            redTurn = true;
+
+            String line;
+            while ((line = reader.readLine()) != null) {
+                String[] parts = line.split(",");
+                int row = Integer.parseInt(parts[0]);
+                int col = Integer.parseInt(parts[1]);
+                char playerChar = parts[2].charAt(0);
+
+                Point point = new Point(row, col);
+                grid.put(point, playerChar);
+
+                for (Node n : gridPane.getChildren()) {
+                    if (GridPane.getRowIndex(n) == row && GridPane.getColumnIndex(n) == col && n instanceof StackPane cell) {
+                        Label label = new Label(Character.toString(playerChar));
+                        int ggridSize = choiceBox.getValue();
+
+                        if (ggridSize == 2) label.setStyle("-fx-font-size: 40px;");
+                        else if (ggridSize == 3) label.setStyle("-fx-font-size: 30px;");
+                        else if (ggridSize == 4) label.setStyle("-fx-font-size: 25px;");
+                        else if (ggridSize == 5) label.setStyle("-fx-font-size: 20px;");
+                        else if (ggridSize == 6) label.setStyle("-fx-font-size: 19px;");
+                        else if (ggridSize == 7) label.setStyle("-fx-font-size: 16px;");
+                        else if (ggridSize == 8) label.setStyle("-fx-font-size: 15px;");
+
+                        cell.getChildren().add(label);
+
+                        // Check for SOS to update scores
+                        if (isThereSOS(row, col) && generalGame.isSelected()) {
+                            if (playerChar == 'S') sScore++;
+                            else if (playerChar == 'O') oScore++;
+                        }
+
+                        break;
+                    }
+                }
+            }
+
+            // After replay, show result if in general game mode
+            if (generalGame.isSelected()) {
+                onGeneralGameChecked();
+            }
+
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+
 }
