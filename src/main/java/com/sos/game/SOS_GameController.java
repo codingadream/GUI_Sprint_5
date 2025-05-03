@@ -626,47 +626,79 @@ public class SOS_GameController implements Initializable {
             oScore = 0;
             redTurn = true;
 
+            List<String> moves = new ArrayList<>();
             String line;
             while ((line = reader.readLine()) != null) {
-                String[] parts = line.split(",");
-                int row = Integer.parseInt(parts[0]);
-                int col = Integer.parseInt(parts[1]);
-                char playerChar = parts[2].charAt(0);
+                moves.add(line);
+            }
 
-                Point point = new Point(row, col);
-                grid.put(point, playerChar);
+            Timeline timeline = new Timeline();
+            timeline.setCycleCount(moves.size());
 
-                for (Node n : gridPane.getChildren()) {
-                    if (GridPane.getRowIndex(n) == row && GridPane.getColumnIndex(n) == col && n instanceof StackPane cell) {
-                        Label label = new Label(Character.toString(playerChar));
-                        int ggridSize = choiceBox.getValue();
+            for (int i = 0; i < moves.size(); i++) {
+                String move = moves.get(i);
+                int index = i;
 
-                        if (ggridSize == 2) label.setStyle("-fx-font-size: 40px;");
-                        else if (ggridSize == 3) label.setStyle("-fx-font-size: 30px;");
-                        else if (ggridSize == 4) label.setStyle("-fx-font-size: 25px;");
-                        else if (ggridSize == 5) label.setStyle("-fx-font-size: 20px;");
-                        else if (ggridSize == 6) label.setStyle("-fx-font-size: 19px;");
-                        else if (ggridSize == 7) label.setStyle("-fx-font-size: 16px;");
-                        else if (ggridSize == 8) label.setStyle("-fx-font-size: 15px;");
+                KeyFrame kf = new KeyFrame(Duration.seconds(0.5 * (i + 1)), event -> {
+                    String[] parts = move.split(",");
+                    int row = Integer.parseInt(parts[0]);
+                    int col = Integer.parseInt(parts[1]);
+                    char playerChar = parts[2].charAt(0);
 
-                        cell.getChildren().add(label);
+                    Point point = new Point(row, col);
+                    grid.put(point, playerChar);
 
-                        // Check for SOS to update scores
-                        if (isThereSOS(row, col) && generalGame.isSelected()) {
-                            if (playerChar == 'S') sScore++;
-                            else if (playerChar == 'O') oScore++;
+                    for (Node n : gridPane.getChildren()) {
+                        if (GridPane.getRowIndex(n) == row && GridPane.getColumnIndex(n) == col && n instanceof StackPane cell) {
+                            Label label = new Label(Character.toString(playerChar));
+                            int ggridSize = choiceBox.getValue();
+
+                            if (ggridSize == 2) label.setStyle("-fx-font-size: 40px;");
+                            else if (ggridSize == 3) label.setStyle("-fx-font-size: 30px;");
+                            else if (ggridSize == 4) label.setStyle("-fx-font-size: 25px;");
+                            else if (ggridSize == 5) label.setStyle("-fx-font-size: 20px;");
+                            else if (ggridSize == 6) label.setStyle("-fx-font-size: 19px;");
+                            else if (ggridSize == 7) label.setStyle("-fx-font-size: 16px;");
+                            else if (ggridSize == 8) label.setStyle("-fx-font-size: 15px;");
+
+                            cell.getChildren().add(label);
+
+                            if (isThereSOS(row, col) && generalGame.isSelected()) {
+                                if (playerChar == 'S') sScore++;
+                                else if (playerChar == 'O') oScore++;
+                            }
+
+                            break;
                         }
-
-                        break;
                     }
+                });
+
+                timeline.getKeyFrames().add(kf);
+            }
+
+            timeline.setOnFinished(e -> {
+                if (generalGame.isSelected()) {
+                    onGeneralGameChecked();
+                } else {
+                    drawGameAlert(); // if it's simple game and there's no winner
                 }
-            }
+            });
 
-            // After replay, show result if in general game mode
-            if (generalGame.isSelected()) {
-                onGeneralGameChecked();
-            }
+            timeline.play();
 
+        } catch (IOException e) {
+            e.printStackTrace();
+    }}
+
+    @FXML
+    protected void saveGameToFile() {
+        try (FileWriter writer = new FileWriter("recorded_game.txt")) {
+            for (Map.Entry<Point, Character> entry : grid.entrySet()) {
+                Point p = entry.getKey();
+                char ch = entry.getValue();
+                writer.write(p.x + "," + p.y + "," + ch + "\n");
+            }
+            welcomeText.setText("Game recording saved.");
         } catch (IOException e) {
             e.printStackTrace();
         }

@@ -17,8 +17,12 @@
     </padding>
    <Pane prefHeight="333.0" prefWidth="542.0">
       <children>
+          <Button layoutX="401.0" layoutY="265.0" mnemonicParsing="false" prefHeight="26.0" prefWidth="130.0" text="Play Saved Game" onAction="#replayRecordedGame"/>
+          <Button layoutX="401.0" layoutY="295.0" mnemonicParsing="false" prefHeight="26.0" prefWidth="130.0" text="Save Game Recording" onAction="#saveGameToFile"/>
+
           <Button layoutX="418.0" layoutY="204.0" onAction="#onHelloButtonClick" text="Replay" />
          <CheckBox fx:id="simpleGame" onAction="#SimpleGameChecked" layoutX="58.0" layoutY="6.0" mnemonicParsing="false" text="Simple Game" />
+
          <CheckBox layoutX="14.0" fx:id="bluePlayerHuman" onAction= "#bHumanChecked" layoutY="71.0" mnemonicParsing="false" text="Human" />
          <CheckBox fx:id="bluePlayerS" onAction="#bSChecked" layoutX="37.0" layoutY="88.0" mnemonicParsing="false" text="S" />
          <CheckBox fx:id="bluePlayerO" onAction="#bOChecked" layoutX="36.0" layoutY="110.0" mnemonicParsing="false" text="O" />
